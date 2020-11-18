@@ -4,6 +4,8 @@ class Nucleo
 {
     private $conexion;
     private $queryPersonalizado;
+    private $tablaBase;
+    private $ordenar;
     public function __construct()
     {
         $obj = new Conexion();
@@ -13,28 +15,30 @@ class Nucleo
 
     //-----------------------------------------------------------------------------------------------------
     //SECCION DE INSERCION
-    public function insertarRegistro($tablaBase, array $campos)
+    public function insertarRegistro(array $campos)
     {
         try {
             $consulta = "";
-            if (!empty($this->queryPersonalizado)) {
-                $consulta = $this->queryPersonalizado;
-            } else {
-                if (GESTOR == 1) {
-                    $consulta = $this->getInToPSQL($tablaBase);
-                } else if (GESTOR == 2) {
-                    $consulta = $this->getInToMariaDB($tablaBase);
+            if (!empty($this->tablaBase)) {
+                if (!empty($this->queryPersonalizado)) {
+                    $consulta = $this->queryPersonalizado;
+                } else {
+                    if (GESTOR == 1) {
+                        $consulta = $this->getInToPSQL($this->tablaBase);
+                    } else if (GESTOR == 2) {
+                        $consulta = $this->getInToMariaDB($$this->tablaBase);
+                    }
                 }
-            }
-            if (!empty($consulta)) {
-                $resultado = $this->conexion->prepare($consulta);
-                $resultado->execute($campos);
-                if ($resultado->rowCount() > 0) {
+                if (!empty($consulta)) {
+                    $resultado = $this->conexion->prepare($consulta);
+                    $resultado->execute($campos);
+                    if ($resultado->rowCount() > 0) {
+                        $resultado->closeCursor();
+                        return true;
+                    }
                     $resultado->closeCursor();
-                    return true;
+                    return false;
                 }
-                $resultado->closeCursor();
-                return false;
             }
             return null;
         } catch (PDOException $e) {
@@ -44,43 +48,47 @@ class Nucleo
     //OBTIENE EL SQL INSERT IN TO SI LA TABLA PERTENECE A POSTGRESQL
     private function getInToPSQL($tablaBase)
     {
-        $consulta = "SELECT column_name FROM information_schema.columns WHERE 
-                            table_schema = 'public' AND table_name = '$tablaBase'";
         try {
-            $resultado = $this->conexion->prepare($consulta);
-            if ($resultado->execute()) {
-                $salida = array();
-                $parametros = "";
-                while ($col = $resultado->fetch(PDO::FETCH_ASSOC)) {
-                    $salida[] = $col['column_name'];
-                    $parametros = $parametros . "? ,";
+            if (!empty($this->tablaBase)) {
+                $consulta = "SELECT column_name FROM information_schema.columns WHERE 
+                table_schema = 'public' AND table_name = '$tablaBase'";
+                $resultado = $this->conexion->prepare($consulta);
+                if ($resultado->execute()) {
+                    $salida = array();
+                    $parametros = "";
+                    while ($col = $resultado->fetch(PDO::FETCH_ASSOC)) {
+                        $salida[] = $col['column_name'];
+                        $parametros = $parametros . "? ,";
+                    }
+                    $resultado->closeCursor();
+                    $parametros = substr($parametros, 0, -1);
+                    return "INSERT INTO $tablaBase (" . implode(",", $salida) . ") VALUES (" . $parametros . ");";
                 }
                 $resultado->closeCursor();
-                $parametros = substr($parametros, 0, -1);
-                return "INSERT INTO $tablaBase (" . implode(",", $salida) . ") VALUES (" . $parametros . ");";
             }
-            $resultado->closeCursor();
             return null;
         } catch (PDOException $e) {
             die("El error de la conexión fue: " . $e->getMessage());
         }
     }
     //OBTIENE EL SQL INSERT IN TO SI LA TABLA PERTENECE A MARIADB
-    private function getInToMariaDB($tablaBase)
+    private function getInToMariaDB()
     {
-        $consulta = "show columns from $tablaBase";
         try {
-            $resultado = $this->conexion->prepare($consulta);
-            $resultado->execute();
-            $salida = array();
-            $parametros = "";
-            while ($col = $resultado->fetch(PDO::FETCH_ASSOC)) {
-                $salida[] = $col['Field'];
-                $parametros = $parametros . "? ,";
+            if (!empty($this->tablaBase)) {
+                $consulta = "show columns from $this->tablaBase";
+                $resultado = $this->conexion->prepare($consulta);
+                $resultado->execute();
+                $salida = array();
+                $parametros = "";
+                while ($col = $resultado->fetch(PDO::FETCH_ASSOC)) {
+                    $salida[] = $col['Field'];
+                    $parametros = $parametros . "? ,";
+                }
+                $resultado->closeCursor();
+                $parametros = substr($parametros, 0, -1);
+                return "INSERT INTO cargo (" . implode(",", $salida) . ") VALUES (" . $parametros . ");";
             }
-            $resultado->closeCursor();
-            $parametros = substr($parametros, 0, -1);
-            return "INSERT INTO cargo (" . implode(",", $salida) . ") VALUES (" . $parametros . ");";
         } catch (PDOException $e) {
             die("El error de la conexión fue: " . $e->getMessage());
         }
@@ -88,25 +96,27 @@ class Nucleo
     //-----------------------------------------------------------------------------------------------------
 
     //SECCION DE LISTAR (TODOS LOS CAMPOS)
-    public function getDatos($tablaBase, $ordenar)
+    public function getDatos()
     {
         try {
-            $consulta = "";
-            if (!empty($this->queryPersonalizado)) {
-                $consulta = $this->queryPersonalizado;
-            } else {
-                if (!empty($ordenar)) {
-                    $consulta = "SELECT * FROM $tablaBase order by $ordenar;";
+            if (!empty($this->tablaBase)) {
+                $consulta = "";
+                if (!empty($this->queryPersonalizado)) {
+                    $consulta = $this->queryPersonalizado;
                 } else {
-                    $consulta = "SELECT * FROM $tablaBase";
+                    if (!empty($this->ordenar)) {
+                        $consulta = "SELECT * FROM $this->tablaBase order by $this->ordenar;";
+                    } else {
+                        $consulta = "SELECT * FROM $this->tablaBase";
+                    }
                 }
-            }
-            $resultado = $this->conexion->prepare($consulta);
-            $resultado->execute();
-            $datos = $resultado->fetchAll(PDO::FETCH_ASSOC);
-            $resultado->closeCursor();
-            if ($datos) {
-                return $datos;
+                $resultado = $this->conexion->prepare($consulta);
+                $resultado->execute();
+                $datos = $resultado->fetchAll(PDO::FETCH_ASSOC);
+                $resultado->closeCursor();
+                if ($datos) {
+                    return $datos;
+                }
             }
             return null;
         } catch (PDOException $e) {
@@ -130,6 +140,46 @@ class Nucleo
     public function setQueryPersonalizado($queryPersonalizado)
     {
         $this->queryPersonalizado = $queryPersonalizado;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of tablaBase
+     */
+    public function getTablaBase()
+    {
+        return $this->tablaBase;
+    }
+
+    /**
+     * Set the value of tablaBase
+     *
+     * @return  self
+     */
+    public function setTablaBase($tablaBase)
+    {
+        $this->tablaBase = $tablaBase;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of ordenar
+     */
+    public function getOrdenar()
+    {
+        return $this->ordenar;
+    }
+
+    /**
+     * Set the value of ordenar
+     *
+     * @return  self
+     */
+    public function setOrdenar($ordenar)
+    {
+        $this->ordenar = $ordenar;
 
         return $this;
     }
