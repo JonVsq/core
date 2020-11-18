@@ -12,31 +12,36 @@ ACTUALMENTE SOLO ES POSIBLE CONECTARSE A POSTGRESQL Y MARIADB(MYSQL).
 
 **EJEMPLO DE CONFIGURACION POSTGRESQL.**
 
-`define('GESTOR', 1);
+~~~
+define('GESTOR', 1);
 
-define('PUERTO', 5432);`
+define('PUERTO', 5432);
 
-`define('SERVIDOR', 'localhost');`
+define('SERVIDOR', 'localhost');
 
-`define('NOMBRE_BD', 'miBasedatosPostgres');`
+define('NOMBRE_BD', 'miBasedatosPostgres');
 
-`define('USUARIO', 'yourUser');`
+define('USUARIO', 'yourUser');
 
-`define('PASSWORD', 'yourPassword');`
+define('PASSWORD', 'yourPassword');
+~~~
+
+
 
 **EJEMPLO DE CONFIGURACION MARIADB(MYSQL).**
+~~~
+define('GESTOR', 2);
 
-`define('GESTOR', 2);`
+define('PUERTO', 5432);
 
-`define('PUERTO', 5432);`
+define('SERVIDOR', 'localhost');
 
-`define('SERVIDOR', 'localhost');`
+define('NOMBRE_BD', 'miBasedatosMariaDB');
 
-`define('NOMBRE_BD', 'miBasedatosMariaDB');`
+define('USUARIO', 'yourUser');
 
-`define('USUARIO', 'yourUser');`
-
-`define('PASSWORD', 'myPassword');`
+define('PASSWORD', 'myPassword');
+~~~
 
 **NOTA: ENCONTRARAS MAS INFORMACION SOBRE ESTOS CAMPOS EN "DatosConexion.php".**
 
@@ -56,7 +61,17 @@ define('PUERTO', 5432);`
 **EJEMPLO:**
 **SUPONIENDO QUE SE TIENE UNA TABLA EN LA BASE DE DATOS LLAMADA "cargo" LA CUAL CONTIENE LOS SIGUIENTES CAMPOS "id,nombre,sueldo,temporal", BASTA CON SOLO ASIGNAR EL NOMBRE DE LA TABLA Y PASAR UN ARRAY CON LOS VALORES OBTENIDOS YA SEA MEDIANTE UN FORMULARIO, JSON O CUALQUIER FUENTE RESPETANDO EL ORDEN Y EL TIPO DE LOS CAMPOS EN LA BASE DE DATOS SEGUN ESTE EJEMPLO:**
 
-`` php $nucleo = new Nucleo(); $nucleo->setTablaBase('cargo'); if ($nucleo->insertarRegistro(array(15, "DOCENTE", 675, true))) { echo 'REGISTRO ALMACENADO'; } else { echo 'REGISTRO NO ALMACENADO'; } $nucleo = null; ``` `
+~~~
+$nucleo = new Nucleo(); 
+$nucleo->setTablaBase('cargo'); 
+if ($nucleo->insertarRegistro(array(15, "DOCENTE", 675, true))) { 
+     echo 'REGISTRO ALMACENADO';
+  } else {
+         echo 'REGISTRO NO ALMACENADO'; 
+  }
+  
+  $nucleo = null; 
+~~~
 
 _NOTA: ESTA FORMA SOLO SE RECOMIENDA CUANDO INGRESARAS TODOS LOS CAMPOS INCLUIDO LA LLAVE PRINCIPAL, DE NO SER ASI SE RECOMIENDA USAR UNA QUERY PERSONALIZADA._
 
@@ -67,20 +82,38 @@ _NOTA: ESTA FORMA SOLO SE RECOMIENDA CUANDO INGRESARAS TODOS LOS CAMPOS INCLUIDO
    A TRAVES DE SU METODO SET, RETOMANDO EL EJEMPLO ANTERIOR AHORA SE HARA DE MANERA QUE NO DESEEMOS INGRESAR EL "id" O "llave principal" DE LA TABLA "cargo" Y POSTERIORMENTE LLAMANDO AL METODO "insertarRegistro()" Y DE IGUAL MANERA PASAR
    UN ARRAY CON LOS CAMPOS QUE DESEAS INGRESAR, RETOMANDO EL CASO ANTERIOR EL ID ES AUTO INCREMENTABLE, ES DECIR NO HAY NECESIDAD DE INCLUIRLO:
 
-   `` php $nucleo = new Nucleo(); $nucleo->setTablaBase('cargo'); $nucleo->setQueryPersonalizado('INSERT INTO cargo(nombre,sueldo,temporal) VALUES(?,?,?);'); if ($nucleo->insertarRegistro(array("DOCENTE", 675, true))) { echo 'REGISTRO ALMACENADO'; } else { echo 'REGISTRO NO ALMACENADO'; } $nucleo = null; ``` `
+  ~~~
+  $nucleo = new Nucleo();
+  $nucleo->setTablaBase('cargo');
+  $nucleo->setQueryPersonalizado('INSERT INTO cargo(nombre,sueldo,temporal) VALUES(?,?,?);');
+  if ($nucleo->insertarRegistro(array("DOCENTE", 675, true))) {
+    echo 'REGISTRO ALMACENADO';
+  } else {
+    echo 'REGISTRO NO ALMACENADO';
+  }
+  $nucleo = null;
+  ~~~
 
 Y ASI DE FACIL SE HACE UNA INSERCION CON ESTE MINI CORE
 
 **OBTENER REGISTROS DE LA BASE DE DATOS.**
 
 1.  PARA OBTENER LOS REGISTROS BASTA CON SOLO SETEAR EL NOMBRE DE LA TABLA EN DONDE SE HARA LA COSULTA, RETORNA UN ARRAY ASOCIATIVO CON LA INFORMACION DE LA TABLA Y RETORNA NULL SI LA TABLA NO SE ENCUENTRA O NO HA SIDO SETEADA:
-    `` php $nucleo = new Nucleo(); $nucleo->setTablaBase('cargo'); $datos = $nucleo->getDatos(); var_dump($datos); $nucleo = null; ``` `
+   ~~~
+   $nucleo = new Nucleo();
+   $nucleo->setTablaBase('cargo');
+   $datos = $nucleo->getDatos();
+   var_dump($datos);
+   $nucleo = null;
+   ~~~
 2.  DE IGUAL MANERA PUEDES HACER CONSULTAS CON UNA QUERY PERSONALIZADA:
 
-        `` php $nucleo = new Nucleo();
-
-    $nucleo->setTablaBase('cargo');
-$nucleo->setQueryPersonalizado('SELECT c.nombre FROM cargo as c');
-    $datos = $nucleo->getDatos();
-    var_dump($datos);
-$nucleo = null; ``` `
+   ~~~
+   
+  $nucleo = new Nucleo();
+  $nucleo->setTablaBase('cargo');
+  $nucleo->setQueryPersonalizado('SELECT c.nombre FROM cargo as c');
+  $datos = $nucleo->getDatos();
+  var_dump($datos);
+  $nucleo = null;
+   ~~~
