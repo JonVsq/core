@@ -6,6 +6,9 @@ class Nucleo
     private $queryPersonalizado;
     private $tablaBase;
     private $ordenar;
+    private $totalCampos;
+    private $regresarId = false;
+    private $id;
     public function __construct()
     {
         $obj = new Conexion();
@@ -20,21 +23,23 @@ class Nucleo
         try {
             $consulta = "";
             if (!empty($this->tablaBase)) {
+                $this->totalCampos = count($campos);
                 if (!empty($this->queryPersonalizado)) {
                     $consulta = $this->queryPersonalizado;
                 } else {
                     if (GESTOR == 1) {
-                        $consulta = $this->getInToPSQL($this->tablaBase);
+                        $consulta = $this->getInToPSQL();
                     } else if (GESTOR == 2) {
-                        $consulta = $this->getInToMariaDB($$this->tablaBase);
+                        $consulta = $this->getInToMariaDB();
                     }
                 }
                 if (!empty($consulta)) {
                     $resultado = $this->conexion->prepare($consulta);
                     $resultado->execute($campos);
                     if ($resultado->rowCount() > 0) {
+                        $this->id = $this->conexion->lastInsertId();
                         $resultado->closeCursor();
-                        return true;
+                        return $this->regresarId ? $this->id : true;
                     }
                     $resultado->closeCursor();
                     return false;
@@ -46,27 +51,31 @@ class Nucleo
         }
     }
     //OBTIENE EL SQL INSERT IN TO SI LA TABLA PERTENECE A POSTGRESQL
-    private function getInToPSQL($tablaBase)
+    private function getInToPSQL()
     {
         try {
             if (!empty($this->tablaBase)) {
                 $consulta = "SELECT column_name FROM information_schema.columns WHERE 
-                table_schema = 'public' AND table_name = '$tablaBase'";
+                table_schema = 'public' AND table_name = '$this->tablaBase'";
                 $resultado = $this->conexion->prepare($consulta);
                 if ($resultado->execute()) {
                     $salida = array();
                     $parametros = "";
-                    while ($col = $resultado->fetch(PDO::FETCH_ASSOC)) {
-                        $salida[] = $col['column_name'];
-                        $parametros = $parametros . "? ,";
+                    $datos = $resultado->fetchAll(PDO::FETCH_ASSOC);
+                    $totalColumnas = count($datos);
+                    if ($totalColumnas >= $this->totalCampos) {
+                        for ($i = ($totalColumnas - ($this->totalCampos)); $i < $totalColumnas; $i++) {
+                            $salida[] = $datos[$i]['column_name'];
+                            $parametros = $parametros . "? ,";
+                        }
+                        $resultado->closeCursor();
+                        $parametros = substr($parametros, 0, -1);
+                        return "INSERT INTO $this->tablaBase (" . implode(",", $salida) . ") VALUES (" . $parametros . ");";
                     }
-                    $resultado->closeCursor();
-                    $parametros = substr($parametros, 0, -1);
-                    return "INSERT INTO $tablaBase (" . implode(",", $salida) . ") VALUES (" . $parametros . ");";
                 }
                 $resultado->closeCursor();
             }
-            return null;
+            return "";
         } catch (PDOException $e) {
             die("El error de la conexión fue: " . $e->getMessage());
         }
@@ -78,17 +87,24 @@ class Nucleo
             if (!empty($this->tablaBase)) {
                 $consulta = "show columns from $this->tablaBase";
                 $resultado = $this->conexion->prepare($consulta);
-                $resultado->execute();
-                $salida = array();
-                $parametros = "";
-                while ($col = $resultado->fetch(PDO::FETCH_ASSOC)) {
-                    $salida[] = $col['Field'];
-                    $parametros = $parametros . "? ,";
+                if ($resultado->execute()) {
+                    $salida = array();
+                    $parametros = "";
+                    $datos = $resultado->fetchAll(PDO::FETCH_ASSOC);
+                    $totalColumnas = count($datos);
+                    if ($totalColumnas >= $this->totalCampos) {
+                        for ($i = ($totalColumnas - ($this->totalCampos)); $i < $totalColumnas; $i++) {
+                            $salida[] = $datos[$i]['Field'];
+                            $parametros = $parametros . "? ,";
+                        }
+                        $resultado->closeCursor();
+                        $parametros = substr($parametros, 0, -1);
+                        return "INSERT INTO cargo (" . implode(",", $salida) . ") VALUES (" . $parametros . ");";
+                    }
+                    $resultado->closeCursor();
                 }
-                $resultado->closeCursor();
-                $parametros = substr($parametros, 0, -1);
-                return "INSERT INTO cargo (" . implode(",", $salida) . ") VALUES (" . $parametros . ");";
             }
+            return "";
         } catch (PDOException $e) {
             die("El error de la conexión fue: " . $e->getMessage());
         }
@@ -180,6 +196,25 @@ class Nucleo
     public function setOrdenar($ordenar)
     {
         $this->ordenar = $ordenar;
+
+        return $this;
+    }
+    /**
+     * Get the value of regresarId
+     */
+    public function getregresarId()
+    {
+        return $this->regresarId;
+    }
+
+    /**
+     * Set the value of regresarId
+     *
+     * @return  self
+     */
+    public function setRegresarId($regresarId)
+    {
+        $this->regresarId = $regresarId;
 
         return $this;
     }
