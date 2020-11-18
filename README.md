@@ -109,7 +109,6 @@ Y ASI DE FACIL SE HACE UNA INSERCION CON ESTE MINI CORE
 2.  DE IGUAL MANERA PUEDES HACER CONSULTAS CON UNA QUERY PERSONALIZADA:
 
    ~~~
-   
   $nucleo = new Nucleo();
   $nucleo->setTablaBase('cargo');
   $nucleo->setQueryPersonalizado('SELECT c.nombre FROM cargo as c');
