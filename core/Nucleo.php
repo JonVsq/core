@@ -48,7 +48,12 @@ class Nucleo
             if (!empty($this->tablaBase)) {
                 $this->totalCampos = count($campos);
                 if (!empty($this->queryPersonalizado)) {
-                    $consulta = $this->queryPersonalizado;
+                    $values = "";
+                    for ($i = 0; $i < $this->totalCampos; $i++) {
+                        $values = $values . "?, ";
+                    }
+                    $values = substr($values, 0, -2);
+                    $consulta = "INSERT INTO $this->tablaBase (" . $this->queryPersonalizado . ") VALUES(" . $values . ");";
                 } else {
                     if (GESTOR == 1) {
                         $consulta = $this->getInToPSQL();
