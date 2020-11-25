@@ -39,7 +39,7 @@ define('NOMBRE_BD', 'miBasedatosMariaDB');
 
 define('USUARIO', 'yourUser');
 
-define('PASSWORD', 'youPassword');
+define('PASSWORD', 'yourPassword');
 ```
 
 _NOTA: ENCONTRARAS MAS INFORMACION SOBRE ESTOS CAMPOS EN "DatosConexion.php"._

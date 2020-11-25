@@ -44,10 +44,10 @@ define('PUERTO', 5432);
 define('SERVIDOR', 'localhost');
 
 //EL NOMBRE DE LA BASE DE DATOS QUE DESEA CONECTAR
-define('NOMBRE_BD', 'ana');
+define('NOMBRE_BD', 'nameBD');
 
 //EL USUARIO DEL GESTOS DE BASE DE DATOS
-define('USUARIO', 'postgres');
+define('USUARIO', 'yourUser');
 
 //CONTRASEÑA DEL GESTOR PARA ACCEDER
-define('PASSWORD', 'root');
+define('PASSWORD', 'yourPassword');
